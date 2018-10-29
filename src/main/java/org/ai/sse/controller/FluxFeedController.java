@@ -5,12 +5,15 @@ import org.ai.storage.FeedStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -19,17 +22,26 @@ public class FluxFeedController {
     @Autowired
     private FeedStorageService feedStorageService;
 
-    @GetMapping(value = "/feed-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<Feed> streamEvents() {
+    private final static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
-        final Date[] lastUpdate = new Date[]{null};
+
+    @GetMapping(value = "/feed-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<Feed> streamEvents(@RequestParam(value = "from", required = false) String fromParam) {
+
+
+        final LocalDateTime from = StringUtils.isEmpty(fromParam) ? null : LocalDateTime.parse(fromParam, formatter);
+
+        final LocalDateTime[] lastUpdate = new LocalDateTime[]{null};
         return Flux.interval(Duration.ofSeconds(1))
                 .flatMap(s -> {
                     final List<Feed> feeds;
                     if (s == 0) {
-                        feeds = feedStorageService.getFeeds();
+                        if (from != null)
+                            feeds = feedStorageService.getFeedsFrom(from);
+                        else
+                            feeds = feedStorageService.getFeeds();
                     } else {
-                        feeds = feedStorageService.getFeedsFrom(lastUpdate[0]);
+                        feeds = feedStorageService.getFeedsAfter(lastUpdate[0]);
 
                     }
                     if (!CollectionUtils.isEmpty(feeds))

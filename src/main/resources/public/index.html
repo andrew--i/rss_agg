@@ -1,24 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8"/>
     <title>Job Notifications</title>
     <script>
-      var subscribe = function() {
-        var eventSource = new EventSource('/feed-stream');
+      var eventSource;
 
-        eventSource.onmessage = function(e) {
+      var subscribe = function () {
+        if (eventSource) {
+          eventSource.close();
+          document.getElementById("notificationDiv").innerHTML = '';
+
+        }
+
+        var value = document.getElementById("datetime").value;
+        eventSource = new EventSource('/feed-stream?from=' + encodeURI(value));
+
+        eventSource.onmessage = function (e) {
           var notification = JSON.parse(e.data);
           document.getElementById("notificationDiv").innerHTML += notification.title + " at " + notification.date + "<br/>";
         };
       };
-      window.onload = subscribe;
-      window.onbeforeunload = function() {
+      window.onbeforeunload = function () {
         eventSource.close();
       }
     </script>
 </head>
 <body>
-<h1>Notifications: </h1>
+<div>
+    <p>Подписаться на супер-ленту</p>
+    <p><input id="datetime" type="datetime"></p>
+    <p><input type="submit" onclick="subscribe()"></p>
+</div>
+
 <div id="notificationDiv"></div>
 </body>
 </html>
