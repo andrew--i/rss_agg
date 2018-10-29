@@ -29,20 +29,17 @@ public class FluxFeedController {
     public Flux<Feed> streamEvents(@RequestParam(value = "from", required = false) String fromParam) {
 
 
-        final LocalDateTime from = StringUtils.isEmpty(fromParam) ? null : LocalDateTime.parse(fromParam, formatter);
+        final LocalDateTime from = StringUtils.isEmpty(fromParam) ? LocalDateTime.now() : LocalDateTime.parse(fromParam, formatter);
+
 
         final LocalDateTime[] lastUpdate = new LocalDateTime[]{null};
         return Flux.interval(Duration.ofSeconds(1))
                 .flatMap(s -> {
                     final List<Feed> feeds;
                     if (s == 0) {
-                        if (from != null)
-                            feeds = feedStorageService.getFeedsFrom(from);
-                        else
-                            feeds = feedStorageService.getFeeds();
+                        feeds = feedStorageService.getFeedsFrom(from);
                     } else {
                         feeds = feedStorageService.getFeedsAfter(lastUpdate[0]);
-
                     }
                     if (!CollectionUtils.isEmpty(feeds))
                         lastUpdate[0] = feeds.get(feeds.size() - 1).getDate();
