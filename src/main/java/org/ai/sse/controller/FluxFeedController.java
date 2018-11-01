@@ -32,7 +32,7 @@ public class FluxFeedController {
         final LocalDateTime from = StringUtils.isEmpty(fromParam) ? LocalDateTime.now() : LocalDateTime.parse(fromParam, formatter);
 
 
-        final LocalDateTime[] lastUpdate = new LocalDateTime[]{null};
+        final LocalDateTime[] lastUpdate = new LocalDateTime[]{from};
         return Flux.interval(Duration.ofSeconds(1))
                 .flatMap(s -> {
                     final List<Feed> feeds;
